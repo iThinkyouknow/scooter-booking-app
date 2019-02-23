@@ -16,8 +16,8 @@ const insertDeltaToLocation = ({ latitude = fallbackInitialRegion.latitude, long
     return {
         latitude,
         longitude,
-        latitudeDelta: 0.00922,
-        longitudeDelta: 0.00421
+        latitudeDelta: 0.00522,
+        longitudeDelta: 0.00221
     };
 }
 

@@ -13,7 +13,10 @@ import {
 import { Provider, connect } from 'react-redux';
 
 
-const { get } = require('./utils/utils');
+const { get, compose } = require('./utils/utils');
+const {
+    slideSideBarAnimation
+} = require('./animation/animation');
 const { store, getScooters, updateLocation } = require('./redux/redux-index');
 
 const mapStyle = require('./constants/mapStyle.json');
@@ -24,13 +27,42 @@ const Tooltip = require('./components/Tooltip');
 const BeamScooterIcon = require('./components/BeamScooterIcon');
 const BatteryBar = require('./components/BatteryBar');
 
-const updateCurrentLocationAndScooters = (props) => (event) => {
-    const coordinate = get(event, "nativeEvent.coordinate");
-    [
-        getScooters,
-        updateLocation
-    ].forEach((fn) => props.dispatch(fn(coordinate)))
+const SideBarContentContainer = require('./components/SideBarContentContainer');
+const SideBarButton = require('./components/SideBarButton');
+const SideBarButtonImage = require('./components/SideBarButtonImage');
+
+
+const threshold = 0.0005
+const getIsGreaterThanLocationThreshold = (threshold) => (p1) => (p2) => {
+    return Math.abs(p1 - p2) > threshold
 };
+
+const getIsGreaterThanThresholdwThreshold = getIsGreaterThanLocationThreshold(threshold)
+
+const updateCurrentLocationAndScooters = (prevCoordinateCache = { latitude: 0, longitude: 0 }) => (props) => (event) => {
+    const coordinate = get(event, "nativeEvent.coordinate");
+
+    const areNewCoordinatesGreaterThanThreshold = [
+        [coordinate.longitude, prevCoordinateCache.longitude],
+        [coordinate.latitude, prevCoordinateCache.latitude],
+    ]
+        .map(([p1, p2]) => getIsGreaterThanThresholdwThreshold(p1)(p2))
+        .reduce((currentResult, result) => {
+            return currentResult ? currentResult : result
+        }, false);
+
+    if (areNewCoordinatesGreaterThanThreshold) {
+        [
+            getScooters,
+            updateLocation
+        ].forEach((fn) => props.dispatch(fn(coordinate)));
+
+        prevCoordinateCache = coordinate;
+    }
+
+};
+
+const updateCurrentLocationAndScootersWithCache = updateCurrentLocationAndScooters();
 
 const getMarkerComponents = (props) => {
     return props.scootersDetails
@@ -55,7 +87,7 @@ class MapViewComponent extends React.Component {
         return (
             <Map mapStyle={mapStyle}
                 currentLocation={this.props.currentLocation}
-                onUserLocationChange={updateCurrentLocationAndScooters(this.props)} >
+                onUserLocationChange={updateCurrentLocationAndScootersWithCache(this.props)} >
                 {getMarkerComponents(this.props)}
             </Map>
         );
@@ -75,111 +107,61 @@ const mapStateToProps = (state) => {
 
 const ConnectedMapView = connect(mapStateToProps)(MapViewComponent);
 
-const slideSideBarAnimation = () => {
-    let isOpen = false;
-    let sideBarAnimatedValue = new Animated.Value(0);
-    let buttonAnimatedValue = new Animated.Value(0);
 
-    const slide = (sideBarWidth) => (sideBarButtonEndValue) => () => {
-        const slideToValue = isOpen ? 0 : sideBarWidth;
-        const slideButtonValue = isOpen ? 0 : sideBarButtonEndValue
-        Animated.stagger(300, [
-            Animated.spring(sideBarAnimatedValue, {
-                toValue: slideToValue,
-                friction: 4,
-                useNativeDriver: true,
-            }),
-            Animated.timing(buttonAnimatedValue, {
-                toValue: slideButtonValue,
-                useNativeDriver: true,
-            })
-        ]).start();
+/** for the server */
 
-        isOpen = !isOpen
-    };
+const getPrice = (fixedPrice = 1) => (perMinutePrice = 0.15) => (timeTakenInMinutes = 0) => (timeTakenInMinutes * perMinutePrice + fixedPrice);
+const getPriceWithoutMinutes = getPrice(1)(0.15);
+const roundPriceTo5Cents = (price) => (Math.ceil(price * 20) / 20).toFixed(2);
+const getPriceString = (price) => `$${price}`;
 
-    return {
-        sideBarAnimatedValue,
-        buttonAnimatedValue,
-        slide
-    }
+const getHHandMinsArrayFromMinutesTime = (timeTakenInMinutes) => {
+    return [
+        Math.floor(timeTakenInMinutes / 60),
+        timeTakenInMinutes % 60
+    ];
 };
 
-const { sideBarAnimatedValue, buttonAnimatedValue, slide } = slideSideBarAnimation();
+const getHHMinsDurationString = ([hours, mins]) => {
+    return hours === 0 ? `${mins} mins` : `${hours} h ${mins} m`;
+}
 
+const mockData = Array.from({ length: 10 }, (_, i) => {
+    const timeTakenInMinutes = Math.floor(Math.random() * 5 * 60);
+    const lengthStr = compose([
+        getHHandMinsArrayFromMinutesTime,
+        getHHMinsDurationString
+    ])(timeTakenInMinutes);
+
+
+    const price = compose([
+        getPriceWithoutMinutes,
+        roundPriceTo5Cents,
+        getPriceString
+    ])(timeTakenInMinutes);
+
+    return {
+        id: `trip-${i}`,
+        date: `22 February`,
+        length: lengthStr,
+        price
+    }
+});
+/** server / redux*/
 const KeyExtractor = (item, index) => item.id;
 
 const getFlatList = (props) => {
     //A) date the trip was taken, 2) trip length, 3) a price that is computed based on some function of the trip length
-    const mockData = Array.from({ length: 10 }, (_, i) => {
-        
-        return {
-            id: `trip-${i}`,
-            date: `22 February`,
-            length: `${Math.floor(Math.random() * 10)}.0 km`,
-            price: `$${Math.floor(Math.random() * 10)}.00`
-        }
-    });
-
-    const FlatListItem = ({ item }) => {
-        const { id, date, length, price } = item;
-        const textStyle = {
-            color: 'white',
-            fontSize: 20,
-            lineHeight: 24 * 1.3
-        }
-
-        const subTextStyle = {
-            paddingVertical: 4,
-            color: 'white',
-            fontSize: 12,
-            textAlign: 'center'
-        };
-        return (
-            <View style={{
-                flexDirection: 'row',
-                justifyContent: 'center',
-                marginTop: 32
-            }}>
-                <View style={{
-                    marginRight: 24,
-                    alignItems: 'center'
-                }}>
-                    <View style={{
-                        backgroundColor: 'blue',
-                        width: 2,
-                        borderRadius: 5,
-                        flex: 1
-                    }}>
-
-                    </View>
-                    <Text style={subTextStyle}>
-                        {length}
-                    </Text>
-                    <View style={{
-                        backgroundColor: 'blue',
-                        width: 2,
-                        borderRadius: 5,
-                        flex: 1
-                    }}></View>
-                </View>
-                <View style={{paddingVertical: 16}}>
-                    <Text style={textStyle}>{date}</Text>
-
-                    <Text style={textStyle}>{price}</Text>
-                </View>
-
-            </View>
-        );
-    };
     return (
         <FlatList
             data={mockData}
             keyExtractor={KeyExtractor}
-            renderItem={FlatListItem}
+            renderItem={require('./components/DashedVerticalLinesWithDetails')}
         />
     )
 }
+
+const { sideBarAnimatedValue, buttonAnimatedValue, slide } = slideSideBarAnimation();
 
 class SideBar extends React.Component {
     render() {
@@ -188,77 +170,51 @@ class SideBar extends React.Component {
         const barWidth = Math.floor(0.75 * width + 30 + extraSpacingLeft);
 
         const sideBarStyle = {
-            flexDirection: 'row',
             left: -barWidth + 30,
             width: barWidth,
             height,
-            backgroundColor: 'transparent',
-            position: 'absolute',
             transform: [
                 { translateX: sideBarAnimatedValue }
-            ]
-
+            ],
         };
 
         const mainSideBarStyle = {
-            flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
             paddingLeft: extraSpacingLeft,
-            paddingTop: 50,
-            justifyContent: 'center',
-            // flexDirection: 'column'
-        }
+        };
 
         const buttonHeight = 100;
         const buttonTop = height * 0.5 - buttonHeight * 0.5;
         const buttonTopWhenAnimated = buttonTop - buttonHeight;
 
-
+        const slideWithDimensions = slide(barWidth - 30 - extraSpacingLeft)(buttonTopWhenAnimated);
 
         return (
-            <Animated.View style={sideBarStyle}>
-                <View style={mainSideBarStyle}>
-                    {/* text goes here */}
-                    <Text style={{
-                        fontSize: 36,
-                        color: 'white',
-                        textAlign: 'center',
-                        alignSelf: 'center'
-                    }}>
-                        History
-                    </Text>
+            <Animated.View style={[styles.sideBarContainer, sideBarStyle]}>
+                <SideBarContentContainer sideBarContentContainerStyle={mainSideBarStyle}>
                     {getFlatList(this.props)}
-                </View>
-                <TouchableOpacity onPress={slide(barWidth - 30 - extraSpacingLeft)(buttonTopWhenAnimated)}>
-                    <Animated.View style={{
+                </SideBarContentContainer>
+
+                <SideBarButton
+                    onPress={slideWithDimensions}
+                    customStyle={{
                         top: buttonTop,
                         height: buttonHeight,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        width: 30,
-                        borderTopRightRadius: 10,
-                        borderBottomRightRadius: 10,
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
                         transform: [{
                             translateY: buttonAnimatedValue,
                         }]
-                    }}
-                    >
-                        <Animated.Image source={require('./assets/arrow.png')} style={{
-                            height: buttonHeight - 30,
-                            width: 20,
-                            resizeMode: 'stretch',
-                            transform: [
-                                {
-                                    rotate: buttonAnimatedValue.interpolate({
-                                        inputRange: [0, buttonTopWhenAnimated],
-                                        outputRange: ["180deg", "0deg"]  // 0 : 150, 0.5 : 75, 1 : 0
-                                    })
-                                }
-                            ]
-                        }} />
-                    </Animated.View>
-                </TouchableOpacity>
+                    }}>
+                    <SideBarButtonImage customStyle={{
+                        height: buttonHeight - 30,
+                        transform: [
+                            {
+                                rotate: buttonAnimatedValue.interpolate({
+                                    inputRange: [0, buttonTopWhenAnimated],
+                                    outputRange: ["180deg", "0deg"]  // 0 : 150, 0.5 : 75, 1 : 0
+                                })
+                            }
+                        ]
+                    }} />
+                </SideBarButton>
             </Animated.View>
 
         )
@@ -280,12 +236,11 @@ export default class App extends React.Component {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
+    sideBarContainer: {
+        flexDirection: 'row',
+        backgroundColor: 'transparent',
+        position: 'absolute',
+    }
 });
 
 
