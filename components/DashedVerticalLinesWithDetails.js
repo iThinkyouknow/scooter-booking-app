@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 
 const DashedVerticalLinesWithDetails = ({ item }) => {
-    const { id, date, length, price } = item;
+    const { id, date, length, price } = item || {};
     return (
         <View style={styles.container}>
             <View style={styles.dashedLinesContainer}>
