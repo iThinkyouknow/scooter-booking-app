@@ -1,10 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image } from 'react-native';
-import { Marker, PROVIDER_GOOGLE, Callout } from 'react-native-maps';
-
-import {
-    MapView
-} from 'expo';
+import { Marker } from 'react-native-maps';
 
 const mock_fallbackCoordinate = {
     latitude: 1.296692,
@@ -12,7 +7,6 @@ const mock_fallbackCoordinate = {
 };
 
 const MarkerComponent = ({
-    index = 0,
     scooterDetail = mock_fallbackCoordinate,
     children
 }) => {
@@ -24,11 +18,5 @@ const MarkerComponent = ({
         </Marker>
     )
 };
-
-
-
-const styles = StyleSheet.create({
-    
-});
 
 module.exports = MarkerComponent

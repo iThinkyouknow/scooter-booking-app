@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image } from 'react-native';
-import { Marker, PROVIDER_GOOGLE, Callout } from 'react-native-maps';
+import { StyleSheet } from 'react-native';
+import { PROVIDER_GOOGLE } from 'react-native-maps';
 
 import {
     MapView
@@ -12,7 +12,7 @@ const {
 
 const fallbackInitialRegion = require('../constants/fallbackCurrentLocation.json')
 
-const insertDeltaToLocation = ({ latitude = fallbackInitialRegion.latitude, longitude = fallbackInitialRegion.longitude}) => {
+const insertDeltaToLocation = ({ latitude = fallbackInitialRegion.latitude, longitude = fallbackInitialRegion.longitude }) => {
     return {
         latitude,
         longitude,
@@ -25,7 +25,6 @@ const Map = ({
     mapStyle = [],
     initialRegion = fallbackInitialRegion,
     currentLocation,
-    Markers = [],
     onUserLocationChange = noOp,
     children = {}
 }) => (

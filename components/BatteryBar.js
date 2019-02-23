@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, Animated } from 'react-native';
+import { StyleSheet, View, Animated } from 'react-native';
 
-const {batteryBarScale} = require('../animation/animation');
+const { batteryBarScale } = require('../animation/animation');
 
 const getBatteryBarColor = (batteryPercentage) => {
     if (batteryPercentage < 20) {
@@ -23,7 +23,7 @@ const BatteryBar = (props) => {
     const translateXAnimatedValue = batteryBarScaleAnimate.initialAnimatedValue;
     batteryBarScaleAnimate.start(translateX);
     return (
-        <View style={[styles.batteryBarOuter, { borderColor: batteryColor}]}>
+        <View style={[styles.batteryBarOuter, { borderColor: batteryColor }]}>
             <Animated.View style={[styles.batteryBarInner, {
                 backgroundColor: batteryColor,
                 transform: [
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     batteryBarInner: {
         width: 30,
         height: 3,
-        
+
         borderRadius: 2
     }
 })

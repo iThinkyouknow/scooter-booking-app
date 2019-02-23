@@ -1,10 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, Animated } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-const {isString} = require('../utils/utils')
-
-
-/**iphone X 375, 812 */
+const { isString } = require('../utils/utils')
 
 const SideBarContainer = (props) => {
     const {
@@ -15,13 +12,12 @@ const SideBarContainer = (props) => {
     } = props;
 
     return (
-            <View style={[styles.sideBarContentContainer, sideBarContentContainerStyle]}>
-                {/* text goes here */}
-                <Text style={[styles.textHeader, customTextStyle]}>
-                    { isString(customText) ? customText : 'Timeline'}
-                    </Text>
-                {children}
-            </View>
+        <View style={[styles.sideBarContentContainer, sideBarContentContainerStyle]}>
+            <Text style={[styles.textHeader, customTextStyle]}>
+                {isString(customText) ? customText : 'The Good Times we have!'}
+            </Text>
+            {children}
+        </View>
     );
 
 }
@@ -35,7 +31,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     textHeader: {
-        fontSize: 36,
+        marginHorizontal: 8,
+        fontSize: 32,
         color: 'white',
         textAlign: 'center',
         alignSelf: 'center'

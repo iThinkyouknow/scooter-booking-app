@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image } from 'react-native';
-import { Marker, PROVIDER_GOOGLE, Callout } from 'react-native-maps';
+import { StyleSheet, Text, View } from 'react-native';
+import { Callout } from 'react-native-maps';
 
 const Tooltip = ({ scooterDetail, onPress }) => {
 
@@ -18,7 +18,7 @@ const Tooltip = ({ scooterDetail, onPress }) => {
                     <Text style={[styles.text, styles.codeText]}>{serialCode}</Text>
                     <Text style={styles.text}>to Beam away</Text>
                 </View>
-               
+
             </View>
         </Callout>
     );

@@ -1,25 +1,26 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, Animated, TouchableOpacity } from 'react-native';
+import { StyleSheet, Animated, TouchableOpacity } from 'react-native';
 
 const {
     noOp
 } = require('../utils/utils')
 
-// const { batteryBarScale } = require('../animation/animation');
 const SideBarButton = (props) => {
     const {
         onPress = noOp,
         customStyle = {},
         children
     } = props;
-    /**slide(barWidth - 30 - extraSpacingLeft)(buttonTopWhenAnimated) */
-    /**{
-            top: buttonTop,
-            height: buttonHeight,
-            transform: [{
-                translateY: buttonAnimatedValue,
-            }]
-        }, */
+
+    /**
+    {
+        top: buttonTop,
+        height: buttonHeight,
+        transform: [{
+            translateY: buttonAnimatedValue,
+        }]
+    }, 
+    */
 
     const style = [
         styles.sideBarButton,

@@ -1,23 +1,19 @@
 import React from 'react';
 import {
     StyleSheet,
-    Text,
-    View,
-    Image,
     Dimensions,
     Animated,
-    TouchableOpacity,
     FlatList,
 } from 'react-native';
 
 import { Provider, connect } from 'react-redux';
 
 
-const { get, compose } = require('./utils/utils');
+const { get, compose, isArray } = require('./utils/utils');
 const {
     slideSideBarAnimation
 } = require('./animation/animation');
-const { store, getScooters, updateLocation } = require('./redux/redux-index');
+const { store, getScooters, updateLocation, getPreviousRides } = require('./redux/redux-index');
 
 const mapStyle = require('./constants/mapStyle.json');
 
@@ -30,6 +26,7 @@ const BatteryBar = require('./components/BatteryBar');
 const SideBarContentContainer = require('./components/SideBarContentContainer');
 const SideBarButton = require('./components/SideBarButton');
 const SideBarButtonImage = require('./components/SideBarButtonImage');
+const DashedVerticalLinesWithDetails = require('./components/DashedVerticalLinesWithDetails')
 
 
 const threshold = 0.0005
@@ -70,10 +67,7 @@ const getMarkerComponents = (props) => {
             <MarkerComponent key={scooterDetail.longitude} scooterDetail={scooterDetail}>
                 <BeamScooterIcon source={require('./assets/beam_scooter.png')} />
                 <BatteryBar scooterDetail={scooterDetail} />
-
                 <Tooltip scooterDetail={scooterDetail} />
-
-
             </MarkerComponent>
         ));
 };
@@ -82,8 +76,6 @@ const getMarkerComponents = (props) => {
 class MapViewComponent extends React.Component {
 
     render() {
-        console.log('render' + this.props.currentLocation.latitude)
-        //todo: debounce!
         return (
             <Map mapStyle={mapStyle}
                 currentLocation={this.props.currentLocation}
@@ -97,73 +89,48 @@ class MapViewComponent extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        currentLocation: get(state, "currentLocation", {
+        currentLocation: get(state, 'currentLocation', {
             latitude: 1.295852,
             longitude: 103.786936,
         }),
-        scootersDetails: get(state, "scootersDetails", [])
+        scootersDetails: get(state, 'scootersDetails', []),
+        previousRides: get(state, 'previousRides', [])
     }
 };
 
 const ConnectedMapView = connect(mapStateToProps)(MapViewComponent);
 
-
-/** for the server */
-
-const getPrice = (fixedPrice = 1) => (perMinutePrice = 0.15) => (timeTakenInMinutes = 0) => (timeTakenInMinutes * perMinutePrice + fixedPrice);
-const getPriceWithoutMinutes = getPrice(1)(0.15);
-const roundPriceTo5Cents = (price) => (Math.ceil(price * 20) / 20).toFixed(2);
-const getPriceString = (price) => `$${price}`;
-
-const getHHandMinsArrayFromMinutesTime = (timeTakenInMinutes) => {
-    return [
-        Math.floor(timeTakenInMinutes / 60),
-        timeTakenInMinutes % 60
-    ];
-};
-
-const getHHMinsDurationString = ([hours, mins]) => {
-    return hours === 0 ? `${mins} mins` : `${hours} h ${mins} m`;
-}
-
-const mockData = Array.from({ length: 10 }, (_, i) => {
-    const timeTakenInMinutes = Math.floor(Math.random() * 5 * 60);
-    const lengthStr = compose([
-        getHHandMinsArrayFromMinutesTime,
-        getHHMinsDurationString
-    ])(timeTakenInMinutes);
-
-
-    const price = compose([
-        getPriceWithoutMinutes,
-        roundPriceTo5Cents,
-        getPriceString
-    ])(timeTakenInMinutes);
-
-    return {
-        id: `trip-${i}`,
-        date: `22 February`,
-        length: lengthStr,
-        price
-    }
-});
-/** server / redux*/
 const KeyExtractor = (item, index) => item.id;
 
 const getFlatList = (props) => {
+    const {
+        previousRides = []
+    } = props;
     //A) date the trip was taken, 2) trip length, 3) a price that is computed based on some function of the trip length
+    /** 
+     * previousRides: [{
+        id: String,
+        date: String,
+        length: String,
+        price: String
+    }]**/
     return (
         <FlatList
-            data={mockData}
+            data={previousRides}
             keyExtractor={KeyExtractor}
-            renderItem={require('./components/DashedVerticalLinesWithDetails')}
+            renderItem={DashedVerticalLinesWithDetails}
         />
     )
-}
+};
 
 const { sideBarAnimatedValue, buttonAnimatedValue, slide } = slideSideBarAnimation();
 
 class SideBar extends React.Component {
+
+    componentDidMount() {
+        this.props.dispatch(getPreviousRides());
+    }
+
     render() {
         const { height, width } = Dimensions.get('window');
         const extraSpacingLeft = 100;

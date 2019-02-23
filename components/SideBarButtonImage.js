@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, Animated, TouchableOpacity } from 'react-native';
+import { StyleSheet, Animated } from 'react-native';
 
 const SideBarButtonImage = (props) => {
     const {
@@ -13,17 +13,17 @@ const SideBarButtonImage = (props) => {
     ]
 
     /**{
-            height: buttonHeight - 30,
-            width: 20,
+        height: buttonHeight - 30,
+        width: 20,
 
-            transform: [
-                {
-                    rotate: buttonAnimatedValue.interpolate({
-                        inputRange: [0, buttonTopWhenAnimated],
-                        outputRange: ["180deg", "0deg"]  // 0 : 150, 0.5 : 75, 1 : 0
-                    })
-                }
-            ]
+        transform: [
+            {
+                rotate: buttonAnimatedValue.interpolate({
+                    inputRange: [0, buttonTopWhenAnimated],
+                    outputRange: ["180deg", "0deg"]  // 0 : 150, 0.5 : 75, 1 : 0
+                })
+            }
+        ]
         } */
     return (
         <Animated.Image source={source || require('../assets/arrow.png')} style={style} />

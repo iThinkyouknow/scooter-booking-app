@@ -1,17 +1,31 @@
+/** It could be separated into different files* but for simplicity sakes, it is combined into one
+    * index, actions, 1 file for each reducer, actionConstants, reduxConfigs etc
+    * **/
+
 import { createStore, applyMiddleware } from 'redux';
 import promise from 'redux-promise-middleware';
 import logger from 'redux-logger'
 
 const {
-    get,
-    compose,
-    isNumber
+    compose
 } = require('../utils/utils')
 
 const {
-    getScootersFromNetwork,
-    getCurrentLocation: getCurrentLocationFromNetwork
+    api_getScooters,
+    api_getPreviousRides
 } = require('../fetch/api');
+
+const generateActionTypesConstants = (type) => {
+    const pending = `${type}_PENDING`;
+    const fulfilled = `${type}_FULFILLED`;
+    const rejected = `${type}_REJECTED`;
+    return {
+        [type]: type,
+        [pending]: pending,
+        [fulfilled]: fulfilled,
+        [rejected]: rejected
+    };
+};
 
 const actionTypes = {
     "GET_SCOOTERS": {
@@ -25,14 +39,16 @@ const actionTypes = {
         "UPDATE_CURRENT_LOCATION_PENDING": "UPDATE_CURRENT_LOCATION_PENDING",
         "UPDATE_CURRENT_LOCATION_FULFILLED": "UPDATE_CURRENT_LOCATION_FULFILLED",
         "UPDATE_CURRENT_LOCATION_REJECTED": "UPDATE_CURRENT_LOCATION_REJECTED"
-    }
+    },
+    "GET_PREVIOUS_RIDES": generateActionTypesConstants("GET_PREVIOUS_RIDES")
+
 };
 
 //actions
 const getScooters = (currentLocation) => {
     return {
         type: actionTypes.GET_SCOOTERS.GET_SCOOTERS,
-        payload: getScootersFromNetwork(currentLocation)
+        payload: api_getScooters(currentLocation)
     }
 }
 
@@ -40,6 +56,13 @@ const updateLocation = (location) => {
     return {
         type: actionTypes.UPDATE_CURRENT_LOCATION.UPDATE_CURRENT_LOCATION,
         payload: location
+    }
+};
+
+const getPreviousRides = () => {
+    return {
+        type: actionTypes.GET_PREVIOUS_RIDES.GET_PREVIOUS_RIDES,
+        payload: api_getPreviousRides()
     }
 };
 
@@ -63,8 +86,6 @@ const addDistanceToDetails = (scooterDetails) => (distanceStr) => {
     }
 };
 
-const stringifyDistance = (distance) => isNumber(distance) ? `${distance}` : 'unavailable';
-
 
 // reducer
 const reducer1 = (state = {}, action) => {
@@ -81,13 +102,13 @@ const reducer1 = (state = {}, action) => {
     } else if (action.type === actionTypes.GET_SCOOTERS.GET_SCOOTERS_FULFILLED) {
         const getDistanceWithCurrLocation = getDistance(state.currentLocation);
         /**
-         * scooterDetail: {
+         * scooterDetail: [{
                 latitude: Number,
                 longitude: Number,
                 batteryPercentage: Number,
                 serialCode: String,
                 distance: Number (in meters)
-            }
+            }]
          */
         return {
             ...state,
@@ -99,8 +120,21 @@ const reducer1 = (state = {}, action) => {
                         addDistanceToDetails(scooterDetail)
                     ])(scooterDetail);
                 })
-                .sort((a, b) => b.distance - a.distance)
+                .sort((a, b) => b.distance - a.distance) || []
         };
+    } else if (action.type === actionTypes.GET_PREVIOUS_RIDES.GET_PREVIOUS_RIDES_FULFILLED) {
+        /**
+         * [{
+                id: String,
+                date: String,
+                length: String,
+                price: String
+            }]
+         */
+        return {
+            ...state,
+            previousRides: action.payload || []
+        }
     }
     return state || {};
 };
@@ -112,5 +146,6 @@ module.exports = {
     store,
     actionTypes,
     getScooters,
-    updateLocation
-}
+    updateLocation,
+    getPreviousRides
+};
