@@ -66,7 +66,7 @@ Other Animations
 
 # Hope you find this app to your liking
 
-###### (Things that could have been)done
+###### (Things that could have been done)
 - [ ] Split reducers into separate files 
 - [ ] Unit tests
 - [ ] Error handling in the reducer from the server
