@@ -31,6 +31,25 @@ Go up one folder to the root of the Project
 cd ..
 ```
 (otherwise simply...)
+
+open up the constants/serverConfigs.json file and edit the host to the ip address of your computer with port 3000.
+```
+{
+    "host": "<your ip address>:3000"
+}
+```
+
+Eg: (if you use VS Code):
+```
+code ./constants/serverConfigs.json
+```
+
+```
+{
+    "host": "10.100.102.95:3000"
+}
+```
+
 ```
 npm install
 npm start --ios
@@ -47,7 +66,9 @@ You'll need the Expo app on the iPhone
 
 ## Things to look out for
 ### App-wise
-The battery bar on the scooter icons animate on load and on updating of user location! (slides right according to the battery percentage)
+The battery bar on the scooter icons animate on load and on updating of user location! (fills up according to the battery percentage).
+
+(refresh the app if you missed it)
 
 Other Animations
 
